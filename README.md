@@ -21,7 +21,7 @@ A Neovim plugin that helps you quickly jump to conflicts (e.g., merge conflicts)
     require("headhunter").setup({
       -- Default keymaps
       keymaps = {
-        next = "]g",   -- Jump to next conflict
+        next_conflict = "]g",   -- Jump to next conflict
       },
     })
   end
