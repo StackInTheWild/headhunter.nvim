@@ -16,7 +16,7 @@ A Neovim plugin that helps you quickly jump to conflicts (e.g., merge conflicts)
 ### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 ```lua
 {
-  "davidlacasse/headhunter.nvim",
+  "StackInTheWild/headhunter.nvim",
   config = function()
     require("headhunter").setup({
       -- Default keymaps
