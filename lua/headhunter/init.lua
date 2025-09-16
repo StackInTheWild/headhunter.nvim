@@ -6,8 +6,13 @@ local current_index = 0
 local config = {
     keymaps = {
         next_conflict = "]g",
+        take_head = "<leader>gh",
+        take_origin = "<leader>go",
+        take_both = "<leader>gb",
     },
-} -- Parses git grep output (testable, can be called by tests)
+}
+
+-- Parses git grep output (testable, can be called by tests)
 function M._parse_conflicts(output)
     local conflicts = {}
     for line in output:gmatch("[^\r\n]+") do
@@ -19,13 +24,23 @@ function M._parse_conflicts(output)
     return conflicts
 end
 
+-- Parse lines in a file for conflicts (helper for get_conflicts)
+function M.parse_conflicts(file, lines)
+    local res = {}
+    for i, line in ipairs(lines) do
+        if line:match("^<<<<<<< HEAD") then
+            table.insert(res, { file = file, lnum = i })
+        end
+    end
+    return res
+end
+
 -- Get all Git conflicts across tracked files
 local function get_conflicts()
     local conflicts_list = {}
     local files = {}
 
-    -- Get Git-tracked files (cross-platform)
-    local handle = io.popen("git ls-files 2>nul") -- Windows-friendly
+    local handle = io.popen("git ls-files 2>nul")
     if handle then
         local output = handle:read("*a")
         handle:close()
@@ -34,7 +49,6 @@ local function get_conflicts()
         end
     end
 
-    -- Scan each file for conflict markers
     for _, file in ipairs(files) do
         local ok, lines = pcall(vim.fn.readfile, file)
         if ok then
@@ -43,7 +57,6 @@ local function get_conflicts()
         end
     end
 
-    -- Sort by file and line number
     table.sort(conflicts_list, function(a, b)
         if a.file == b.file then
             return a.lnum < b.lnum
@@ -53,57 +66,138 @@ local function get_conflicts()
 
     return conflicts_list
 end
+
+-- Jump to next conflict
 function M.next_conflict()
     conflicts = get_conflicts()
-    current_index = 0
 
     if #conflicts == 0 then
         print("No conflicts found ✅")
         return
     end
 
-    -- Move to the next conflict (wrap around)
     current_index = current_index + 1
     if current_index > #conflicts then
         current_index = 1
     end
 
     local conflict = conflicts[current_index]
-
-    -- Open the file and jump to the line
     vim.cmd("edit " .. conflict.file)
     vim.api.nvim_win_set_cursor(0, { conflict.lnum, 0 })
 end
 
+-- Extract conflict block (HEAD, ORIGIN)
+local function get_conflict_block(bufnr, start_line)
+    local lines = vim.api.nvim_buf_get_lines(bufnr, start_line - 1, -1, false)
+    local head_lines, origin_lines = {}, {}
+    local mode = "head"
+
+    local consumed = 0
+    for _, line in ipairs(lines) do
+        consumed = consumed + 1
+        if line:match("^<<<<<<< HEAD") then
+            mode = "head"
+        elseif line:match("^=======") then
+            mode = "origin"
+        elseif line:match("^>>>>>>>") then
+            break
+        else
+            if mode == "head" then
+                table.insert(head_lines, line)
+            else
+                table.insert(origin_lines, line)
+            end
+        end
+    end
+
+    return head_lines, origin_lines, consumed
+end
+
+-- Replace conflict with resolution
+local function apply_resolution(mode)
+    local bufnr = vim.api.nvim_get_current_buf()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local start_line = cursor[1]
+
+    local head_lines, origin_lines, consumed =
+        get_conflict_block(bufnr, start_line)
+
+    local replacement = {}
+    if mode == "head" then
+        replacement = head_lines
+    elseif mode == "origin" then
+        replacement = origin_lines
+    elseif mode == "both" then
+        vim.list_extend(replacement, head_lines)
+        vim.list_extend(replacement, origin_lines)
+    end
+
+    vim.api.nvim_buf_set_lines(
+        bufnr,
+        start_line - 1,
+        start_line - 1 + consumed,
+        false,
+        replacement
+    )
+end
+
+function M.take_head()
+    apply_resolution("head")
+end
+function M.take_origin()
+    apply_resolution("origin")
+end
+function M.take_both()
+    apply_resolution("both")
+end
+
 function M.setup(user_config)
-    -- Merge user config with defaults
     if user_config then
         for k, v in pairs(user_config) do
             config[k] = v
         end
     end
 
-    -- Keymaps
     vim.keymap.set(
         "n",
         config.keymaps.next_conflict,
         M.next_conflict,
         { desc = "Next Git conflict" }
     )
+    vim.keymap.set(
+        "n",
+        config.keymaps.take_head,
+        M.take_head,
+        { desc = "Take HEAD in conflict" }
+    )
+    vim.keymap.set(
+        "n",
+        config.keymaps.take_origin,
+        M.take_origin,
+        { desc = "Take ORIGIN in conflict" }
+    )
+    vim.keymap.set(
+        "n",
+        config.keymaps.take_both,
+        M.take_both,
+        { desc = "Take BOTH in conflict" }
+    )
 
-    -- Commands
     vim.api.nvim_create_user_command(
         "HeadhunterNext",
         M.next_conflict,
         { desc = "Go to next Git conflict" }
     )
+    vim.api.nvim_create_user_command("HeadhunterTakeHead", M.take_head, {})
+    vim.api.nvim_create_user_command("HeadhunterTakeOrigin", M.take_origin, {})
+    vim.api.nvim_create_user_command("HeadhunterTakeBoth", M.take_both, {})
+
     vim.api.nvim_create_user_command("HeadhunterReload", function()
         package.loaded["headhunter"] = nil
         require("headhunter").setup()
     end, {})
 end
 
--- Optional helper for tests
 M._get_conflicts_mock = M._parse_conflicts
 
 return M
