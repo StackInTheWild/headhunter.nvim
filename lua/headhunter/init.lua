@@ -3,7 +3,7 @@ local M = {}
 local conflicts = {}
 local current_index = 0
 
-local config = {
+local defaultConfig = {
     keymaps = {
         next_conflict = "]g",
         take_head = "<leader>gh",
@@ -151,34 +151,34 @@ function M.take_both()
     apply_resolution("both")
 end
 
+local config = vim.deepcopy(defaultConfig)
+
 function M.setup(user_config)
     if user_config then
-        for k, v in pairs(user_config) do
-            config[k] = v
-        end
+        config = vim.tbl_deep_extend("force", config, user_config)
     end
 
     vim.keymap.set(
         "n",
-        config.keymaps.next_conflict,
+        defaultConfig.keymaps.next_conflict,
         M.next_conflict,
         { desc = "Next Git conflict" }
     )
     vim.keymap.set(
         "n",
-        config.keymaps.take_head,
+        defaultConfig.keymaps.take_head,
         M.take_head,
         { desc = "Take HEAD in conflict" }
     )
     vim.keymap.set(
         "n",
-        config.keymaps.take_origin,
+        defaultConfig.keymaps.take_origin,
         M.take_origin,
         { desc = "Take ORIGIN in conflict" }
     )
     vim.keymap.set(
         "n",
-        config.keymaps.take_both,
+        defaultConfig.keymaps.take_both,
         M.take_both,
         { desc = "Take BOTH in conflict" }
     )
