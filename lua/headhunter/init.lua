@@ -160,25 +160,25 @@ function M.setup(user_config)
 
     vim.keymap.set(
         "n",
-        defaultConfig.keymaps.next_conflict,
+        config.keymaps.next_conflict,
         M.next_conflict,
         { desc = "Next Git conflict" }
     )
     vim.keymap.set(
         "n",
-        defaultConfig.keymaps.take_head,
+        config.keymaps.take_head,
         M.take_head,
         { desc = "Take HEAD in conflict" }
     )
     vim.keymap.set(
         "n",
-        defaultConfig.keymaps.take_origin,
+        config.keymaps.take_origin,
         M.take_origin,
         { desc = "Take ORIGIN in conflict" }
     )
     vim.keymap.set(
         "n",
-        defaultConfig.keymaps.take_both,
+        config.keymaps.take_both,
         M.take_both,
         { desc = "Take BOTH in conflict" }
     )
