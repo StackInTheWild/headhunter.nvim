@@ -5,6 +5,7 @@ local current_index = 0
 
 local defaultConfig = {
     keymaps = {
+        prev_conflict = "[g",
         next_conflict = "]g",
         take_head = "<leader>gh",
         take_origin = "<leader>go",
@@ -68,7 +69,7 @@ local function get_conflicts()
 end
 
 -- Jump to next conflict
-function M.next_conflict()
+local function navigate_conflict(direction)
     conflicts = get_conflicts()
 
     if #conflicts == 0 then
@@ -76,14 +77,26 @@ function M.next_conflict()
         return
     end
 
-    current_index = current_index + 1
+    current_index = current_index + direction * 1
     if current_index > #conflicts then
         current_index = 1
+    elseif current_index < 1 then
+        current_index = #conflicts
     end
 
     local conflict = conflicts[current_index]
     vim.cmd("edit " .. conflict.file)
     vim.api.nvim_win_set_cursor(0, { conflict.lnum, 0 })
+end
+
+-- Jump to next conflict
+function M.prev_conflict()
+    navigate_conflict(-1)
+end
+
+-- Jump to next conflict
+function M.next_conflict()
+    navigate_conflict(1)
 end
 
 -- Extract conflict block (HEAD, ORIGIN)
@@ -158,6 +171,12 @@ function M.setup(user_config)
         config = vim.tbl_deep_extend("force", config, user_config)
     end
 
+    vim.keymap.set(
+        "n",
+        config.keymaps.prev_conflict,
+        M.prev_conflict,
+        { desc = "Previous Git conflict" }
+    )
     vim.keymap.set(
         "n",
         config.keymaps.next_conflict,
