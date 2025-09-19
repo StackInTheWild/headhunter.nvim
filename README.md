@@ -6,7 +6,7 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 
 ## ✨ Features
 
-- Jump directly to the **next conflict** in your repository.
+- Jump directly to the **next or previous conflict** in your repository.
 - Quickly resolve conflicts using simple keybindings:
   - **Take HEAD** (`<<<<<<< HEAD`) – keeps your local changes.  
   - **Take origin** (`>>>>>>> ...`) – keeps the incoming changes.  
@@ -27,6 +27,7 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
     require("headhunter").setup({
       -- Default keymaps (customize as needed)
       keymaps = {
+        prev_conflict = "[g",
         next_conflict = "]g",
         take_head    = "<leader>gh",
         take_origin  = "<leader>go",
@@ -43,7 +44,8 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 
 ### Navigate Conflicts
 
-- `]g` → Jump to the next conflict in your file.
+- `[g` → Jump to the previous conflict.
+- `]g` → Jump to the next conflict.
 
 ### Resolve Conflicts
 
