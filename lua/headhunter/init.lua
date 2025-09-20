@@ -3,15 +3,7 @@ local M = {}
 local conflicts = {}
 local current_index = 0
 
-local defaultConfig = {
-    keymaps = {
-        prev_conflict = "[g",
-        next_conflict = "]g",
-        take_head = "<leader>gh",
-        take_origin = "<leader>go",
-        take_both = "<leader>gb",
-    },
-}
+local defaultConfig = {}
 
 -- Parses git grep output (testable, can be called by tests)
 function M._parse_conflicts(output)
@@ -171,42 +163,17 @@ function M.setup(user_config)
         config = vim.tbl_deep_extend("force", config, user_config)
     end
 
-    vim.keymap.set(
-        "n",
-        config.keymaps.prev_conflict,
+    vim.api.nvim_create_user_command(
+        "HeadhunterPrevious",
         M.prev_conflict,
-        { desc = "Previous Git conflict" }
+        { desc = "Go to previous Git conflict" }
     )
-    vim.keymap.set(
-        "n",
-        config.keymaps.next_conflict,
-        M.next_conflict,
-        { desc = "Next Git conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_head,
-        M.take_head,
-        { desc = "Take HEAD in conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_origin,
-        M.take_origin,
-        { desc = "Take ORIGIN in conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_both,
-        M.take_both,
-        { desc = "Take BOTH in conflict" }
-    )
-
     vim.api.nvim_create_user_command(
         "HeadhunterNext",
         M.next_conflict,
         { desc = "Go to next Git conflict" }
     )
+
     vim.api.nvim_create_user_command("HeadhunterTakeHead", M.take_head, {})
     vim.api.nvim_create_user_command("HeadhunterTakeOrigin", M.take_origin, {})
     vim.api.nvim_create_user_command("HeadhunterTakeBoth", M.take_both, {})
