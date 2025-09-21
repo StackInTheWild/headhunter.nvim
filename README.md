@@ -23,13 +23,15 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 ```lua
 {
   "StackInTheWild/headhunter.nvim",
+  -- Load plugin when key mapping is accessed
+  lazy = true,
   -- Currently, there is nothing to configure
   opts = {},
   keys = {
-    { "[g", ":HeadhunterNext", desc = "Go to next Conflict" },
-    { "]g", ":HeadhunterPrevious", desc = "Go to previous Conflict" },
+    { "]g", ":HeadhunterNext", desc = "Go to next Conflict" },
+    { "[g", ":HeadhunterPrevious", desc = "Go to previous Conflict" },
     { "<leader>gh", ":HeadhunterTakeHead", desc = "Take changes from HEAD" },
-    { "<leader>go", ":HeadhunterTakeHead", desc = "Take changes from origin" },
+    { "<leader>go", ":HeadhunterTakeOrigin", desc = "Take changes from origin" },
     { "<leader>gb", ":HeadhunterTakeBoth", desc = "Take both changes" },
   },
   end
