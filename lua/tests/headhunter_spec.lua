@@ -1,6 +1,34 @@
 local headhunter = require("headhunter")
 
 describe("headhunter.nvim", function()
+    it("shoul register keymaps by default", function()
+        headhunter.keymaps_registered = false
+        headhunter._register_keymaps = function(config)
+            headhunter.keymaps_registered = true
+        end
+
+        headhunter.setup()
+
+        assert.is_true(headhunter.keymaps_registered)
+    end)
+
+    it(
+        "should skip keymaps registration when explicitly specified in the config",
+        function()
+            headhunter.keymaps_registered = false
+            headhunter._register_keymaps = function(config)
+                headhunter.keymaps_registered = true
+            end
+
+            headhunter.setup({
+                -- Disable keymap registration
+                register_keymaps = false,
+            })
+
+            assert.is_false(headhunter.keymaps_registered)
+        end
+    )
+
     it("returns empty table when no conflicts", function()
         local conflicts = headhunter._get_conflicts_mock("")
         assert.are.same({}, conflicts)

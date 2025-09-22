@@ -8,10 +8,10 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 
 - Jump directly to the **next or previous conflict** in your repository.
 - Quickly resolve conflicts using simple keybindings:
-  - **Take HEAD** (`<<<<<<< HEAD`) – keeps your local changes.  
-  - **Take origin** (`>>>>>>> ...`) – keeps the incoming changes.  
-  - **Take both** – keeps both changes, concatenated in order.  
-- Minimal and fast — pure Lua implementation with no external dependencies.  
+  - **Take HEAD** (`<<<<<<< HEAD`) – keeps your local changes.
+  - **Take origin** (`>>>>>>> ...`) – keeps the incoming changes.
+  - **Take both** – keeps both changes, concatenated in order.
+- Minimal and fast — pure Lua implementation with no external dependencies.
 - Fully customizable keybindings to fit your workflow.
 
 ---
@@ -23,17 +23,17 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 ```lua
 {
   "StackInTheWild/headhunter.nvim",
-  config = function()
-    require("headhunter").setup({
-      -- Default keymaps (customize as needed)
-      keymaps = {
-        prev_conflict = "[g",
-        next_conflict = "]g",
-        take_head    = "<leader>gh",
-        take_origin  = "<leader>go",
-        take_both    = "<leader>gb",
-      },
-    })
+  lazy = true,
+  opts = {
+     register_keymaps = false, -- Disable internal keymaps if using lazy.nvim keys
+  },
+  keys = {
+    { "]g", ":HeadhunterNext", desc = "Go to next Conflict" },
+    { "[g", ":HeadhunterPrevious", desc = "Go to previous Conflict" },
+    { "<leader>gh", ":HeadhunterTakeHead", desc = "Take changes from HEAD" },
+    { "<leader>go", ":HeadhunterTakeOrigin", desc = "Take changes from origin" },
+    { "<leader>gb", ":HeadhunterTakeBoth", desc = "Take both changes" },
+  },
   end
 }
 ```
@@ -41,6 +41,8 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 ---
 
 ## 🚀 Usage
+
+Assuming you are using the keybindings from above:
 
 ### Navigate Conflicts
 
@@ -59,15 +61,14 @@ their changes
 >>>>>>> branch
 ```
 
+| Action      | Keybinding   | Command                 | Resulting Text in Buffer        |
+| ----------- | ------------ | ----------------------- | ------------------------------- |
+| Take HEAD   | `<leader>gh` | `:HeadhunterTakeHead`   | `my changes`                    |
+| Take origin | `<leader>go` | `:HeadhunterTakeOrigin` | `their changes`                 |
+| Take both   | `<leader>gb` | `:HeadhunterTakeBoth`   | `my changes`<br>`their changes` |
 
-| Action      | Keybinding   | Resulting Text in Buffer        |
-| ----------- | ------------ | ------------------------------- |
-| Take HEAD   | `<leader>gh` | `my changes`                    |
-| Take origin | `<leader>go` | `their changes`                 |
-| Take both   | `<leader>gb` | `my changes`<br>`their changes` |
+_Notes:_
 
-
-*Notes:*
 - Take HEAD keeps only your local changes.
 - Take origin keeps only the incoming changes from the other branch.
 - Take both concatenates your changes with the incoming changes, in that order.

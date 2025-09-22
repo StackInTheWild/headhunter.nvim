@@ -4,6 +4,7 @@ local conflicts = {}
 local current_index = 0
 
 local defaultConfig = {
+    register_keymaps = true,
     keymaps = {
         prev_conflict = "[g",
         next_conflict = "]g",
@@ -164,13 +165,7 @@ function M.take_both()
     apply_resolution("both")
 end
 
-local config = vim.deepcopy(defaultConfig)
-
-function M.setup(user_config)
-    if user_config then
-        config = vim.tbl_deep_extend("force", config, user_config)
-    end
-
+function M._register_keymaps(config)
     vim.keymap.set(
         "n",
         config.keymaps.prev_conflict,
@@ -201,12 +196,30 @@ function M.setup(user_config)
         M.take_both,
         { desc = "Take BOTH in conflict" }
     )
+end
 
+local config = vim.deepcopy(defaultConfig)
+
+function M.setup(user_config)
+    if user_config then
+        config = vim.tbl_deep_extend("force", config, user_config)
+    end
+
+    if config.register_keymaps then
+        M._register_keymaps(config)
+    end
+
+    vim.api.nvim_create_user_command(
+        "HeadhunterPrevious",
+        M.prev_conflict,
+        { desc = "Go to previous Git conflict" }
+    )
     vim.api.nvim_create_user_command(
         "HeadhunterNext",
         M.next_conflict,
         { desc = "Go to next Git conflict" }
     )
+
     vim.api.nvim_create_user_command("HeadhunterTakeHead", M.take_head, {})
     vim.api.nvim_create_user_command("HeadhunterTakeOrigin", M.take_origin, {})
     vim.api.nvim_create_user_command("HeadhunterTakeBoth", M.take_both, {})
