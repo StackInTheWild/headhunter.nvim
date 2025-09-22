@@ -3,7 +3,16 @@ local M = {}
 local conflicts = {}
 local current_index = 0
 
-local defaultConfig = {}
+local defaultConfig = {
+    register_keymaps = true,
+    keymaps = {
+        prev_conflict = "[g",
+        next_conflict = "]g",
+        take_head = "<leader>gh",
+        take_origin = "<leader>go",
+        take_both = "<leader>gb",
+    },
+}
 
 -- Parses git grep output (testable, can be called by tests)
 function M._parse_conflicts(output)
@@ -156,11 +165,48 @@ function M.take_both()
     apply_resolution("both")
 end
 
+function M._register_keymaps(config)
+    vim.keymap.set(
+        "n",
+        config.keymaps.prev_conflict,
+        M.prev_conflict,
+        { desc = "Previous Git conflict" }
+    )
+    vim.keymap.set(
+        "n",
+        config.keymaps.next_conflict,
+        M.next_conflict,
+        { desc = "Next Git conflict" }
+    )
+    vim.keymap.set(
+        "n",
+        config.keymaps.take_head,
+        M.take_head,
+        { desc = "Take HEAD in conflict" }
+    )
+    vim.keymap.set(
+        "n",
+        config.keymaps.take_origin,
+        M.take_origin,
+        { desc = "Take ORIGIN in conflict" }
+    )
+    vim.keymap.set(
+        "n",
+        config.keymaps.take_both,
+        M.take_both,
+        { desc = "Take BOTH in conflict" }
+    )
+end
+
 local config = vim.deepcopy(defaultConfig)
 
 function M.setup(user_config)
     if user_config then
         config = vim.tbl_deep_extend("force", config, user_config)
+    end
+
+    if config.register_keymaps then
+        M._register_keymaps(config)
     end
 
     vim.api.nvim_create_user_command(

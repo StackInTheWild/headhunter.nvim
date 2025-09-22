@@ -23,10 +23,10 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 ```lua
 {
   "StackInTheWild/headhunter.nvim",
-  -- Load plugin when key mapping is accessed
   lazy = true,
-  -- Currently, there is nothing to configure
-  opts = {},
+  opts = {
+     register_keymaps = false, -- Disable internal keymaps if using lazy.nvim keys
+  },
   keys = {
     { "]g", ":HeadhunterNext", desc = "Go to next Conflict" },
     { "[g", ":HeadhunterPrevious", desc = "Go to previous Conflict" },
