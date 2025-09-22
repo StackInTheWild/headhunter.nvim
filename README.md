@@ -34,7 +34,6 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
     { "<leader>go", ":HeadhunterTakeOrigin", desc = "Take changes from origin" },
     { "<leader>gb", ":HeadhunterTakeBoth", desc = "Take both changes" },
   },
-  end
 }
 ```
 
