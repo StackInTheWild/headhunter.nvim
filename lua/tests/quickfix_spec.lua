@@ -25,8 +25,9 @@ describe("headhunter quickfix integration", function()
 
         local items = vim.fn.getqflist()
         assert.are.equal(1, #items)
-        local bufname = vim.fn.fnamemodify(vim.fn.bufname(items[1].bufnr), ":.")
-        assert.are.equal(vim.fn.fnamemodify(file, ":."), bufname)
+        local listed_path = items[1].filename
+            or vim.fn.fnamemodify(vim.fn.bufname(items[1].bufnr), ":.")
+        assert.are.equal(vim.fn.fnamemodify(file, ":."), listed_path)
         assert.are.equal(12, items[1].lnum)
         assert.are.equal("Merge conflict marker", items[1].text)
     end)
@@ -35,10 +36,12 @@ describe("headhunter quickfix integration", function()
         headhunter._get_conflicts = function()
             return {}
         end
-        vim.fn.setqflist({ {
-            filename = "dummy.lua",
-            lnum = 1,
-        } })
+        vim.fn.setqflist({
+            {
+                filename = "dummy.lua",
+                lnum = 1,
+            },
+        })
 
         headhunter.populate_quickfix()
 
