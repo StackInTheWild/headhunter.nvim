@@ -23,19 +23,23 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 ```lua
 {
   "StackInTheWild/headhunter.nvim",
-  lazy = true,
-  opts = {
-     register_keymaps = false, -- Disable internal keymaps if using lazy.nvim keys
-  },
-  keys = {
-    { "]g", ":HeadhunterNext", desc = "Go to next Conflict" },
-    { "[g", ":HeadhunterPrevious", desc = "Go to previous Conflict" },
-    { "<leader>gh", ":HeadhunterTakeHead", desc = "Take changes from HEAD" },
-    { "<leader>go", ":HeadhunterTakeOrigin", desc = "Take changes from origin" },
-    { "<leader>gb", ":HeadhunterTakeBoth", desc = "Take both changes" },
-  },
 }
 ```
+
+---
+
+### Default Keymaps
+
+Headhunter configures the following mappings automatically:
+
+- `[g` → Previous conflict (`:HeadhunterPrevious`)
+- `]g` → Next conflict (`:HeadhunterNext`)
+- `<leader>gh` → Take HEAD (`:HeadhunterTakeHead`)
+- `<leader>go` → Take origin (`:HeadhunterTakeOrigin`)
+- `<leader>gb` → Take both (`:HeadhunterTakeBoth`)
+- `<leader>gq` → List conflicts in the quickfix window (`:HeadhunterQuickfix`)
+
+Override a key by setting it in `opts.keymaps` or disable it by setting it to `{}`.
 
 ---
 

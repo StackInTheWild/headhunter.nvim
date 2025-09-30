@@ -4,33 +4,36 @@ local conflicts = {}
 local current_index = 0
 
 local defaultConfig = {
-    register_keymaps = true,
     keymaps = {
         prev_conflict = "[g",
         next_conflict = "]g",
         take_head = "<leader>gh",
         take_origin = "<leader>go",
         take_both = "<leader>gb",
+        populate_quickfix = "<leader>gq",
     },
 }
 
 -- Parses git grep output (testable, can be called by tests)
 function M._parse_conflicts(output)
-    local conflicts = {}
+    local local_conflicts = {}
     for line in output:gmatch("[^\r\n]+") do
-        local file, lnum = line:match("^(.-):(%d+):<<<<<<< HEAD")
+        local file, lnum = line:match("^(.-):(%d+):<<<<<<<")
         if file and lnum then
-            table.insert(conflicts, { file = file, lnum = tonumber(lnum) })
+            table.insert(
+                local_conflicts,
+                { file = file, lnum = tonumber(lnum) }
+            )
         end
     end
-    return conflicts
+    return local_conflicts
 end
 
 -- Parse lines in a file for conflicts (helper for get_conflicts)
 function M.parse_conflicts(file, lines)
     local res = {}
     for i, line in ipairs(lines) do
-        if line:match("^<<<<<<< HEAD") then
+        if line:match("^<<<<<<<") then
             table.insert(res, { file = file, lnum = i })
         end
     end
@@ -38,16 +41,22 @@ function M.parse_conflicts(file, lines)
 end
 
 -- Get all Git conflicts across tracked files
-local function get_conflicts()
+function M._get_conflicts()
     local conflicts_list = {}
     local files = {}
+    local seen_files = {}
 
     local handle = io.popen("git ls-files 2>nul")
     if handle then
         local output = handle:read("*a")
         handle:close()
         for file in output:gmatch("[^\r\n]+") do
-            table.insert(files, vim.fn.fnamemodify(file, ":p"))
+            -- `git ls-files` shows one entry per index stage
+            -- merges/stash conflicts only get scanned once here.
+            if not seen_files[file] then
+                seen_files[file] = true
+                table.insert(files, vim.fn.fnamemodify(file, ":p"))
+            end
         end
     end
 
@@ -69,9 +78,24 @@ local function get_conflicts()
     return conflicts_list
 end
 
+local function build_quickfix_entries(conflicts_list)
+    local entries = {}
+    for _, conflict in ipairs(conflicts_list) do
+        local bufnr = vim.fn.bufadd(conflict.file)
+        table.insert(entries, {
+            bufnr = bufnr,
+            filename = vim.fn.fnamemodify(conflict.file, ":."),
+            lnum = conflict.lnum,
+            col = 1,
+            text = "Merge conflict marker",
+        })
+    end
+    return entries
+end
+
 -- Jump to next conflict
 local function navigate_conflict(direction)
-    conflicts = get_conflicts()
+    conflicts = M._get_conflicts()
 
     if #conflicts == 0 then
         print("No conflicts found ✅")
@@ -88,6 +112,19 @@ local function navigate_conflict(direction)
     local conflict = conflicts[current_index]
     vim.cmd("edit " .. conflict.file)
     vim.api.nvim_win_set_cursor(0, { conflict.lnum, 0 })
+end
+
+function M.populate_quickfix()
+    local conflicts_list = M._get_conflicts()
+    if #conflicts_list == 0 then
+        vim.fn.setqflist({}, "r")
+        print("No conflicts found ✅")
+        return
+    end
+
+    local entries = build_quickfix_entries(conflicts_list)
+    vim.fn.setqflist(entries, "r")
+    vim.cmd("copen")
 end
 
 -- Jump to next conflict
@@ -109,7 +146,7 @@ local function get_conflict_block(bufnr, start_line)
     local consumed = 0
     for _, line in ipairs(lines) do
         consumed = consumed + 1
-        if line:match("^<<<<<<< HEAD") then
+        if line:match("^<<<<<<<") then
             mode = "head"
         elseif line:match("^=======") then
             mode = "origin"
@@ -158,56 +195,45 @@ end
 function M.take_head()
     apply_resolution("head")
 end
+
 function M.take_origin()
     apply_resolution("origin")
 end
+
 function M.take_both()
     apply_resolution("both")
 end
 
 function M._register_keymaps(config)
-    vim.keymap.set(
-        "n",
-        config.keymaps.prev_conflict,
-        M.prev_conflict,
-        { desc = "Previous Git conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.next_conflict,
-        M.next_conflict,
-        { desc = "Next Git conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_head,
-        M.take_head,
-        { desc = "Take HEAD in conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_origin,
-        M.take_origin,
-        { desc = "Take ORIGIN in conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_both,
-        M.take_both,
-        { desc = "Take BOTH in conflict" }
+    local function map(lhs, rhs, desc)
+        if not lhs or lhs == "" then
+            return
+        end
+        vim.keymap.set("n", lhs, rhs, { desc = desc })
+    end
+
+    map(config.keymaps.prev_conflict, M.prev_conflict, "Previous Git conflict")
+    map(config.keymaps.next_conflict, M.next_conflict, "Next Git conflict")
+    map(config.keymaps.take_head, M.take_head, "Take HEAD in conflict")
+    map(config.keymaps.take_origin, M.take_origin, "Take ORIGIN in conflict")
+    map(config.keymaps.take_both, M.take_both, "Take BOTH in conflict")
+    map(
+        config.keymaps.populate_quickfix,
+        M.populate_quickfix,
+        "List Git conflicts"
     )
 end
 
 local config = vim.deepcopy(defaultConfig)
 
 function M.setup(user_config)
-    if user_config then
-        config = vim.tbl_deep_extend("force", config, user_config)
-    end
+    config = vim.tbl_deep_extend(
+        "force",
+        vim.deepcopy(defaultConfig),
+        user_config or {}
+    )
 
-    if config.register_keymaps then
-        M._register_keymaps(config)
-    end
+    M._register_keymaps(config)
 
     vim.api.nvim_create_user_command(
         "HeadhunterPrevious",
@@ -220,9 +246,27 @@ function M.setup(user_config)
         { desc = "Go to next Git conflict" }
     )
 
-    vim.api.nvim_create_user_command("HeadhunterTakeHead", M.take_head, {})
-    vim.api.nvim_create_user_command("HeadhunterTakeOrigin", M.take_origin, {})
-    vim.api.nvim_create_user_command("HeadhunterTakeBoth", M.take_both, {})
+    vim.api.nvim_create_user_command(
+        "HeadhunterTakeHead",
+        M.take_head,
+        { desc = "Take changes from HEAD" }
+    )
+    vim.api.nvim_create_user_command(
+        "HeadhunterTakeOrigin",
+        M.take_origin,
+        { desc = "Take changes from origin" }
+    )
+    vim.api.nvim_create_user_command(
+        "HeadhunterTakeBoth",
+        M.take_both,
+        { desc = "Take both changes" }
+    )
+
+    vim.api.nvim_create_user_command(
+        "HeadhunterQuickfix",
+        M.populate_quickfix,
+        { desc = "List Git conflicts in quickfix" }
+    )
 
     vim.api.nvim_create_user_command("HeadhunterReload", function()
         package.loaded["headhunter"] = nil
