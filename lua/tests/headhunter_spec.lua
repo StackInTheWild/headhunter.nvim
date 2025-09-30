@@ -1,33 +1,66 @@
+local stub = require("luassert.stub")
 local headhunter = require("headhunter")
 
 describe("headhunter.nvim", function()
-    it("shoul register keymaps by default", function()
-        headhunter.keymaps_registered = false
-        headhunter._register_keymaps = function(config)
-            headhunter.keymaps_registered = true
-        end
+    local keymap_set
 
-        headhunter.setup()
-
-        assert.is_true(headhunter.keymaps_registered)
+    before_each(function()
+        keymap_set = stub(vim.keymap, "set")
     end)
 
-    it(
-        "should skip keymaps registration when explicitly specified in the config",
-        function()
-            headhunter.keymaps_registered = false
-            headhunter._register_keymaps = function(config)
-                headhunter.keymaps_registered = true
-            end
+    after_each(function()
+        keymap_set:revert()
+    end)
 
-            headhunter.setup({
-                -- Disable keymap registration
-                register_keymaps = false,
-            })
+    it("registers default keymaps", function()
+        headhunter.setup()
 
-            assert.is_false(headhunter.keymaps_registered)
+        local seen = {}
+        for _, call in ipairs(keymap_set.calls) do
+            seen[call.vals[2]] = call.vals[3]
         end
-    )
+
+        assert.are.equal(headhunter.prev_conflict, seen["[g"])
+        assert.are.equal(headhunter.next_conflict, seen["]g"])
+        assert.are.equal(headhunter.take_head, seen["<leader>gh"])
+        assert.are.equal(headhunter.take_origin, seen["<leader>go"])
+        assert.are.equal(headhunter.take_both, seen["<leader>gb"])
+    end)
+
+    it("allows overriding keymaps", function()
+        headhunter.setup({
+            keymaps = {
+                next_conflict = "]c",
+            },
+        })
+
+        local found_override = false
+        for _, call in ipairs(keymap_set.calls) do
+            local lhs = call.vals[2]
+            local rhs = call.vals[3]
+            if lhs == "]c" and rhs == headhunter.next_conflict then
+                found_override = true
+            end
+        end
+
+        assert.is_true(found_override)
+    end)
+
+    it("skips keymap when explicitly disabled", function()
+        headhunter.setup({
+            keymaps = {
+                take_origin = false,
+            },
+        })
+
+        local seen = {}
+        for _, call in ipairs(keymap_set.calls) do
+            seen[call.vals[2]] = true
+        end
+
+        assert.is_nil(seen["<leader>go"])
+        assert.is_true(seen["[g"]) -- other defaults remain
+    end)
 
     it("returns empty table when no conflicts", function()
         local conflicts = headhunter._get_conflicts_mock("")

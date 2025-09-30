@@ -4,7 +4,6 @@ local conflicts = {}
 local current_index = 0
 
 local defaultConfig = {
-    register_keymaps = true,
     keymaps = {
         prev_conflict = "[g",
         next_conflict = "]g",
@@ -206,54 +205,35 @@ function M.take_both()
 end
 
 function M._register_keymaps(config)
-    vim.keymap.set(
-        "n",
-        config.keymaps.prev_conflict,
-        M.prev_conflict,
-        { desc = "Previous Git conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.next_conflict,
-        M.next_conflict,
-        { desc = "Next Git conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_head,
-        M.take_head,
-        { desc = "Take HEAD in conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_origin,
-        M.take_origin,
-        { desc = "Take ORIGIN in conflict" }
-    )
-    vim.keymap.set(
-        "n",
-        config.keymaps.take_both,
-        M.take_both,
-        { desc = "Take BOTH in conflict" }
-    )
-    vim.keymap.set(
-        "n",
+    local function map(lhs, rhs, desc)
+        if not lhs or lhs == "" then
+            return
+        end
+        vim.keymap.set("n", lhs, rhs, { desc = desc })
+    end
+
+    map(config.keymaps.prev_conflict, M.prev_conflict, "Previous Git conflict")
+    map(config.keymaps.next_conflict, M.next_conflict, "Next Git conflict")
+    map(config.keymaps.take_head, M.take_head, "Take HEAD in conflict")
+    map(config.keymaps.take_origin, M.take_origin, "Take ORIGIN in conflict")
+    map(config.keymaps.take_both, M.take_both, "Take BOTH in conflict")
+    map(
         config.keymaps.populate_quickfix,
         M.populate_quickfix,
-        { desc = "List Git conflicts in quickfix" }
+        "List Git conflicts"
     )
 end
 
 local config = vim.deepcopy(defaultConfig)
 
 function M.setup(user_config)
-    if user_config then
-        config = vim.tbl_deep_extend("force", config, user_config)
-    end
+    config = vim.tbl_deep_extend(
+        "force",
+        vim.deepcopy(defaultConfig),
+        user_config or {}
+    )
 
-    if config.register_keymaps then
-        M._register_keymaps(config)
-    end
+    M._register_keymaps(config)
 
     vim.api.nvim_create_user_command(
         "HeadhunterPrevious",
