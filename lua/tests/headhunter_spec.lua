@@ -62,4 +62,16 @@ file2.txt:14:>>>>>>> branch
         assert.are.equal("file2.txt", conflicts[2].file)
         assert.are.equal(10, conflicts[2].lnum)
     end)
+
+    it("parses stash-style conflict markers", function()
+        local sample = [[
+file1.txt:3:<<<<<<< Updated upstream
+file1.txt:5:=======
+file1.txt:7:>>>>>>> Stashed changes
+]]
+        local conflicts = headhunter._get_conflicts_mock(sample)
+        assert.are.equal(1, #conflicts)
+        assert.are.equal("file1.txt", conflicts[1].file)
+        assert.are.equal(3, conflicts[1].lnum)
+    end)
 end)

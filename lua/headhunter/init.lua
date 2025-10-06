@@ -18,7 +18,7 @@ local defaultConfig = {
 function M._parse_conflicts(output)
     local conflicts = {}
     for line in output:gmatch("[^\r\n]+") do
-        local file, lnum = line:match("^(.-):(%d+):<<<<<<< HEAD")
+        local file, lnum = line:match("^(.-):(%d+):<<<<<<<")
         if file and lnum then
             table.insert(conflicts, { file = file, lnum = tonumber(lnum) })
         end
@@ -30,7 +30,7 @@ end
 function M.parse_conflicts(file, lines)
     local res = {}
     for i, line in ipairs(lines) do
-        if line:match("^<<<<<<< HEAD") then
+        if line:match("^<<<<<<<") then
             table.insert(res, { file = file, lnum = i })
         end
     end
@@ -109,7 +109,7 @@ local function get_conflict_block(bufnr, start_line)
     local consumed = 0
     for _, line in ipairs(lines) do
         consumed = consumed + 1
-        if line:match("^<<<<<<< HEAD") then
+        if line:match("^<<<<<<<") then
             mode = "head"
         elseif line:match("^=======") then
             mode = "origin"

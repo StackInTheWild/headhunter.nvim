@@ -55,4 +55,20 @@ describe("headhunter conflict resolution", function()
         local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
         assert.are.same({ "my change", "their change" }, lines)
     end)
+
+    it("handles stash-style conflict markers", function()
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {
+            "<<<<<<< Updated upstream",
+            "upstream change",
+            "=======",
+            "stashed change",
+            ">>>>>>> Stashed changes",
+        })
+        vim.api.nvim_win_set_cursor(0, { 1, 0 })
+
+        headhunter.take_head()
+
+        local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+        assert.are.same({ "upstream change" }, lines)
+    end)
 end)
