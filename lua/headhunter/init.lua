@@ -63,7 +63,7 @@ function M._get_conflicts()
     local files = {}
     local seen_files = {}
 
-    local handle = io.popen("git ls-files 2>nul")
+    local handle = io.popen("git ls-files 2>/dev/null")
     if handle then
         local output = handle:read("*a")
         handle:close()

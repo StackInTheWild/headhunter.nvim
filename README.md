@@ -92,11 +92,11 @@ Assuming you are using the keybindings from above:
 Given a conflict block like this:
 
 ```
-<<<<<<< HEAD
+<<<<<< HEAD
 my changes
 =======
 their changes
->>>>>>> branch
+>>>>>> branch
 ```
 
 | Action      | Keybinding   | Command                 | Resulting Text in Buffer        |
