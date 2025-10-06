@@ -23,6 +23,28 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 ```lua
 {
   "StackInTheWild/headhunter.nvim",
+  config = function()
+    require("headhunter").setup()
+  end,
+}
+```
+
+Customize inline with lazy.nvim if you need different bindings:
+
+```lua
+{
+  "StackInTheWild/headhunter.nvim",
+  config = function()
+    require("headhunter").setup({
+      enabled = true,         -- set to false to opt out entirely
+      keys = {
+        next = "]c",         -- remap `]g` → `]c`
+        prev = "[c",          -- remap `[g` → `[c`
+        quickfix = false,     -- disable the quickfix opener
+        -- omit other keys to keep their defaults
+      },
+    })
+  end,
 }
 ```
 
@@ -52,7 +74,7 @@ These expand to normal-mode commands:
 - `keys.take_both` (`<leader>gb`) → `:HeadhunterTakeBoth`
 - `keys.quickfix` (`<leader>gq`) → `:HeadhunterQuickfix`
 
-Override a default with `opts.keys` (e.g. `{ keys = { next = ']c' } }`) or disable every mapping via `keys = false`.
+To disable every keybindings, set `keys = false`.
 
 ---
 

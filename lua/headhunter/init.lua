@@ -12,7 +12,22 @@ local default_keys = {
     quickfix = "<leader>gq",
 }
 
+local key_name_order = {
+    "prev",
+    "next",
+    "take_head",
+    "take_origin",
+    "take_both",
+    "quickfix",
+}
+
+local valid_keys = {}
+for _, name in ipairs(key_name_order) do
+    valid_keys[name] = true
+end
+
 local defaultConfig = {
+    enabled = true,
     keys = vim.deepcopy(default_keys),
 }
 
@@ -232,20 +247,42 @@ local config = vim.deepcopy(defaultConfig)
 
 function M.setup(user_config)
     local opts = vim.deepcopy(user_config or {})
-    local keys_option = opts.keys
-    opts.keys = nil
+    if opts.keys ~= nil and opts.keys ~= false then
+        if type(opts.keys) ~= "table" then
+            error("headhunter.nvim: `keys` must be a table, false, or nil")
+        end
+
+        for name, mapping in pairs(opts.keys) do
+            if not valid_keys[name] then
+                error(
+                    string.format(
+                        "headhunter.nvim: unknown key '%s'; valid keys: %s",
+                        name,
+                        table.concat(key_name_order, ", ")
+                    )
+                )
+            end
+
+            if mapping ~= false and type(mapping) ~= "string" then
+                error(
+                    string.format(
+                        "headhunter.nvim: key '%s' expects a string or false, got %s",
+                        name,
+                        type(mapping)
+                    )
+                )
+            end
+        end
+    end
 
     config = vim.tbl_deep_extend("force", vim.deepcopy(defaultConfig), opts)
 
-    if keys_option == false then
-        config.keys = false
-    else
-        config.keys = vim.tbl_extend(
-            "force",
-            {},
-            default_keys,
-            keys_option or {}
-        )
+    if config.keys ~= false then
+        config.keys = vim.tbl_extend("force", {}, default_keys, config.keys or {})
+    end
+
+    if config.enabled == false then
+        return
     end
 
     M._register_keymaps(config)
