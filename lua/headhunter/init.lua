@@ -3,15 +3,17 @@ local M = {}
 local conflicts = {}
 local current_index = 0
 
+local default_keys = {
+    prev = "[g",
+    next = "]g",
+    take_head = "<leader>gh",
+    take_origin = "<leader>go",
+    take_both = "<leader>gb",
+    quickfix = "<leader>gq",
+}
+
 local defaultConfig = {
-    keymaps = {
-        prev_conflict = "[g",
-        next_conflict = "]g",
-        take_head = "<leader>gh",
-        take_origin = "<leader>go",
-        take_both = "<leader>gb",
-        populate_quickfix = "<leader>gq",
-    },
+    keys = vim.deepcopy(default_keys),
 }
 
 -- Parses git grep output (testable, can be called by tests)
@@ -205,6 +207,12 @@ function M.take_both()
 end
 
 function M._register_keymaps(config)
+    if config.keys == false then
+        return
+    end
+
+    local keys = config.keys or {}
+
     local function map(lhs, rhs, desc)
         if not lhs or lhs == "" then
             return
@@ -212,26 +220,33 @@ function M._register_keymaps(config)
         vim.keymap.set("n", lhs, rhs, { desc = desc })
     end
 
-    map(config.keymaps.prev_conflict, M.prev_conflict, "Previous Git conflict")
-    map(config.keymaps.next_conflict, M.next_conflict, "Next Git conflict")
-    map(config.keymaps.take_head, M.take_head, "Take HEAD in conflict")
-    map(config.keymaps.take_origin, M.take_origin, "Take ORIGIN in conflict")
-    map(config.keymaps.take_both, M.take_both, "Take BOTH in conflict")
-    map(
-        config.keymaps.populate_quickfix,
-        M.populate_quickfix,
-        "List Git conflicts"
-    )
+    map(keys.prev, M.prev_conflict, "Previous Git conflict")
+    map(keys.next, M.next_conflict, "Next Git conflict")
+    map(keys.take_head, M.take_head, "Take HEAD in conflict")
+    map(keys.take_origin, M.take_origin, "Take ORIGIN in conflict")
+    map(keys.take_both, M.take_both, "Take BOTH in conflict")
+    map(keys.quickfix, M.populate_quickfix, "List Git conflicts")
 end
 
 local config = vim.deepcopy(defaultConfig)
 
 function M.setup(user_config)
-    config = vim.tbl_deep_extend(
-        "force",
-        vim.deepcopy(defaultConfig),
-        user_config or {}
-    )
+    local opts = vim.deepcopy(user_config or {})
+    local keys_option = opts.keys
+    opts.keys = nil
+
+    config = vim.tbl_deep_extend("force", vim.deepcopy(defaultConfig), opts)
+
+    if keys_option == false then
+        config.keys = false
+    else
+        config.keys = vim.tbl_extend(
+            "force",
+            {},
+            default_keys,
+            keys_option or {}
+        )
+    end
 
     M._register_keymaps(config)
 

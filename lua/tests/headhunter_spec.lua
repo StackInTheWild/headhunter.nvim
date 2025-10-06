@@ -29,8 +29,8 @@ describe("headhunter.nvim", function()
 
     it("allows overriding keymaps", function()
         headhunter.setup({
-            keymaps = {
-                next_conflict = "]c",
+            keys = {
+                next = "]c",
             },
         })
 
@@ -48,7 +48,7 @@ describe("headhunter.nvim", function()
 
     it("skips keymap when explicitly disabled", function()
         headhunter.setup({
-            keymaps = {
+            keys = {
                 take_origin = false,
             },
         })
@@ -60,6 +60,12 @@ describe("headhunter.nvim", function()
 
         assert.is_nil(seen["<leader>go"])
         assert.is_true(seen["[g"]) -- other defaults remain
+    end)
+
+    it("disables all keymaps when keys is false", function()
+        headhunter.setup({ keys = false })
+
+        assert.are.equal(0, #keymap_set.calls)
     end)
 
     it("returns empty table when no conflicts", function()

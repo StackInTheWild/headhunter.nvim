@@ -30,16 +30,29 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 
 ### Default Keymaps
 
-Headhunter configures the following mappings automatically:
+Headhunter ships with the following `keys` defaults:
 
-- `[g` → Previous conflict (`:HeadhunterPrevious`)
-- `]g` → Next conflict (`:HeadhunterNext`)
-- `<leader>gh` → Take HEAD (`:HeadhunterTakeHead`)
-- `<leader>go` → Take origin (`:HeadhunterTakeOrigin`)
-- `<leader>gb` → Take both (`:HeadhunterTakeBoth`)
-- `<leader>gq` → List conflicts in the quickfix window (`:HeadhunterQuickfix`)
+```lua
+keys = {
+  prev = "[g",
+  next = "]g",
+  take_head = "<leader>gh",
+  take_origin = "<leader>go",
+  take_both = "<leader>gb",
+  quickfix = "<leader>gq",
+}
+```
 
-Override a key by setting it in `opts.keymaps` or disable it by setting it to `{}`.
+These expand to normal-mode commands:
+
+- `keys.prev` (`[g`) → `:HeadhunterPrevious`
+- `keys.next` (`]g`) → `:HeadhunterNext`
+- `keys.take_head` (`<leader>gh`) → `:HeadhunterTakeHead`
+- `keys.take_origin` (`<leader>go`) → `:HeadhunterTakeOrigin`
+- `keys.take_both` (`<leader>gb`) → `:HeadhunterTakeBoth`
+- `keys.quickfix` (`<leader>gq`) → `:HeadhunterQuickfix`
+
+Override a default with `opts.keys` (e.g. `{ keys = { next = ']c' } }`) or disable every mapping via `keys = false`.
 
 ---
 
