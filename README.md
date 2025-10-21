@@ -23,19 +23,58 @@ A Neovim plugin that helps you quickly **navigate and resolve merge conflicts** 
 ```lua
 {
   "StackInTheWild/headhunter.nvim",
-  lazy = true,
-  opts = {
-     register_keymaps = false, -- Disable internal keymaps if using lazy.nvim keys
-  },
-  keys = {
-    { "]g", "<cmd>HeadhunterNext<cr>", desc = "Go to next Conflict" },
-    { "[g", "<cmd>HeadhunterPrevious<cr>", desc = "Go to previous Conflict" },
-    { "<leader>gh", "<cmd>HeadhunterTakeHead<cr>", desc = "Take changes from HEAD" },
-    { "<leader>go", "<cmd>HeadhunterTakeOrigin<cr>", desc = "Take changes from origin" },
-    { "<leader>gb", "<cmd>HeadhunterTakeBoth<cr>", desc = "Take both changes" },
-  },
+  config = function()
+    require("headhunter").setup()
+  end,
 }
 ```
+
+Customize inline with lazy.nvim if you need different bindings:
+
+```lua
+{
+  "StackInTheWild/headhunter.nvim",
+  config = function()
+    require("headhunter").setup({
+      enabled = true,         -- set to false to opt out entirely
+      keys = {
+        next = "]c",         -- remap `]g` → `]c`
+        prev = "[c",          -- remap `[g` → `[c`
+        quickfix = false,     -- disable the quickfix opener
+        -- omit other keys to keep their defaults
+      },
+    })
+  end,
+}
+```
+
+---
+
+### Default Keymaps
+
+Headhunter ships with the following `keys` defaults:
+
+```lua
+keys = {
+  prev = "[g",
+  next = "]g",
+  take_head = "<leader>gh",
+  take_origin = "<leader>go",
+  take_both = "<leader>gb",
+  quickfix = "<leader>gq",
+}
+```
+
+These expand to normal-mode commands:
+
+- `keys.prev` (`[g`) → `:HeadhunterPrevious`
+- `keys.next` (`]g`) → `:HeadhunterNext`
+- `keys.take_head` (`<leader>gh`) → `:HeadhunterTakeHead`
+- `keys.take_origin` (`<leader>go`) → `:HeadhunterTakeOrigin`
+- `keys.take_both` (`<leader>gb`) → `:HeadhunterTakeBoth`
+- `keys.quickfix` (`<leader>gq`) → `:HeadhunterQuickfix`
+
+To disable every keybindings, set `keys = false`.
 
 ---
 
@@ -53,11 +92,11 @@ Assuming you are using the keybindings from above:
 Given a conflict block like this:
 
 ```
-<<<<<<< HEAD
+<<<<<< HEAD
 my changes
 =======
 their changes
->>>>>>> branch
+>>>>>> branch
 ```
 
 | Action      | Keybinding   | Command                 | Resulting Text in Buffer        |
